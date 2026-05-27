@@ -168,6 +168,23 @@ fn get_now_playing() -> NowPlaying {
     now_playing::get_now_playing()
 }
 
+/// Update now-playing information (called from frontend when track changes)
+#[tauri::command]
+fn update_now_playing(now_playing: NowPlaying) {
+    let sendspin_player_id = sendspin::get_player_id();
+    let current_now_playing = now_playing::get_now_playing();
+
+    // Filter out frontend updates when Sendspin is active
+    if current_now_playing.player_id.as_deref() == sendspin_player_id.as_deref()
+        && current_now_playing.is_playing
+    {
+        log::info!("[Tauri] Ignoring now-playing update from frontend because Sendspin is active");
+        return;
+    }
+
+    now_playing::update_now_playing(now_playing);
+}
+
 /// Initialize desktop integrations (Discord RPC, tray updates, media controls)
 /// Call this after connecting to the MA server
 #[tauri::command]
@@ -541,6 +558,7 @@ pub fn run() {
             companion_ready,
             navigate_to_launcher,
             get_now_playing,
+            update_now_playing,
             start_desktop_services,
             start_discord_rpc,
             start_rpc,
