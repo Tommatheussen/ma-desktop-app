@@ -168,12 +168,6 @@ fn get_now_playing() -> NowPlaying {
     now_playing::get_now_playing()
 }
 
-/// Update now-playing information (called from frontend when track changes)
-#[tauri::command]
-fn update_now_playing(now_playing: NowPlaying) {
-    now_playing::update_now_playing(now_playing);
-}
-
 /// Initialize desktop integrations (Discord RPC, tray updates, media controls)
 /// Call this after connecting to the MA server
 #[tauri::command]
@@ -547,7 +541,6 @@ pub fn run() {
             companion_ready,
             navigate_to_launcher,
             get_now_playing,
-            update_now_playing,
             start_desktop_services,
             start_discord_rpc,
             start_rpc,
