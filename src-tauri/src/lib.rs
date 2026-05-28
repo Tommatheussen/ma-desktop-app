@@ -290,6 +290,7 @@ fn update_tray_now_playing(np: &NowPlaying) {
         // Update tray metadata - use try_lock to avoid blocking
         if let Ok(tray_guard) = TRAY_ICON.try_lock() {
             if let Some(ref tray) = *tray_guard {
+                // TODO: Remove unwrapping need when https://github.com/tauri-apps/tray-icon/issues/322 gets fixed
                 let _ = tray.set_title(Some(title.as_deref().unwrap_or("")));
                 let _ = tray.set_tooltip(Some(&tooltip));
             }
