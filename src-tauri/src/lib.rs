@@ -282,15 +282,15 @@ fn update_tray_now_playing(np: &NowPlaying) {
     thread::spawn(move || {
         let tooltip = now_playing::format_now_playing_with_player(&np);
         let title = if settings::get_settings().show_tray_now_playing && np.is_playing {
-            now_playing::format_now_playing(&np)
+            Some(now_playing::format_now_playing(&np))
         } else {
-            String::new()
+            None
         };
 
         // Update tray metadata - use try_lock to avoid blocking
         if let Ok(tray_guard) = TRAY_ICON.try_lock() {
             if let Some(ref tray) = *tray_guard {
-                let _ = tray.set_title(Some(&title));
+                let _ = tray.set_title(Some(title.as_deref().unwrap_or("")));
                 let _ = tray.set_tooltip(Some(&tooltip));
             }
         }
