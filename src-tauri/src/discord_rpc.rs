@@ -1,7 +1,7 @@
 use crate::now_playing::{self, NowPlaying};
 use crate::DISCORD_RPC_ENABLED;
 use discord_rich_presence::{
-    activity::{self, StatusDisplayType},
+    activity::{self, ActivityType, StatusDisplayType},
     DiscordIpc, DiscordIpcClient,
 };
 use std::sync::atomic::Ordering;
@@ -132,6 +132,7 @@ fn update_discord_activity(
         .assets(assets)
         .buttons(buttons)
         .timestamps(timestamps)
+        .activity_type(ActivityType::Listening)
         .status_display_type(StatusDisplayType::Details);
 
     client.set_activity(payload)?;
