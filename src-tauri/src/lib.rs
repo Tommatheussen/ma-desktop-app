@@ -178,7 +178,7 @@ fn update_now_playing(now_playing: NowPlaying) {
     if current_now_playing.player_id.as_deref() == sendspin_player_id.as_deref()
         && current_now_playing.is_playing
     {
-        log::info!("[Tauri] Ignoring now-playing update from frontend because Sendspin is active");
+        log::debug!("[Tauri] Ignoring now-playing update from frontend because Sendspin is active");
         return;
     }
 
