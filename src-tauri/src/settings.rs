@@ -192,6 +192,7 @@ pub fn get_settings() -> Settings {
 
 pub fn set_setting(app: tauri::AppHandle, key: &str, value: bool) -> Result<(), String> {
     let mut settings = get_settings();
+    let mut should_refresh_tray_now_playing = false;
 
     match key {
         "discord_rpc_enabled" => {
@@ -231,12 +232,18 @@ pub fn set_setting(app: tauri::AppHandle, key: &str, value: bool) -> Result<(), 
         }
         "show_tray_now_playing" => {
             settings.show_tray_now_playing = value;
-            crate::refresh_tray_now_playing();
+            should_refresh_tray_now_playing = true;
         }
         _ => return Err(format!("Unknown boolean setting: {}", key)),
     }
 
-    save_settings(&settings)
+    save_settings(&settings)?;
+
+    if should_refresh_tray_now_playing {
+        crate::refresh_tray_now_playing();
+    }
+
+    Ok(())
 }
 
 /// Set a string setting value
