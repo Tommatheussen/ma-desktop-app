@@ -231,9 +231,9 @@ fn start_services(app_handle: tauri::AppHandle) {
     }
 
     SERVICES_STARTER.call_once(move || {
-        // Register callback to update tray tooltip and media controls when now-playing changes
+        // Register callback to update tray now-playing state and media controls when playback changes
         now_playing::on_now_playing_change(Arc::new(|np| {
-            update_tray_tooltip(np);
+            update_tray_now_playing(np);
             media_controls::update(np);
         }));
 
@@ -310,31 +310,36 @@ pub fn set_tray_visible(visible: bool) {
     }
 }
 
-/// Update the tray tooltip and menu item with now-playing info
+pub(crate) fn refresh_tray_now_playing() {
+    update_tray_now_playing(&now_playing::get_now_playing());
+}
+
+/// Update the tray title, tooltip, and menu item with now-playing info
 /// Spawns on a separate thread to avoid blocking the caller, since
 /// tray operations on macOS dispatch synchronously to the main thread
-fn update_tray_tooltip(np: &NowPlaying) {
+fn update_tray_now_playing(np: &NowPlaying) {
     let np = np.clone();
 
     // Spawn tray update on a separate thread to never block the caller
     thread::spawn(move || {
         let tooltip = now_playing::format_now_playing_with_player(&np);
+        let title = if settings::get_settings().show_tray_now_playing && np.is_playing {
+            Some(now_playing::format_now_playing(&np))
+        } else {
+            None
+        };
 
-        // Update tooltip - use try_lock to avoid blocking
+        // Update tray metadata - use try_lock to avoid blocking
         if let Ok(tray_guard) = TRAY_ICON.try_lock() {
             if let Some(ref tray) = *tray_guard {
+                // TODO: Remove unwrapping need when https://github.com/tauri-apps/tray-icon/issues/322 gets fixed
+                let _ = tray.set_title(Some(title.as_deref().unwrap_or("")));
                 let _ = tray.set_tooltip(Some(&tooltip));
             }
         }
 
-        // Update menu item text
-        let menu_text = if np.is_playing {
-            let track = np.track.as_deref().unwrap_or("Unknown");
-            let artist = np.artist.as_deref().unwrap_or("Unknown");
-            format!("♪ {} - {}", artist, track)
-        } else {
-            "♪ Not Playing".to_string()
-        };
+        let now_playing_text = now_playing::format_now_playing(&np);
+        let menu_text = format!("♪ {now_playing_text}");
 
         if let Ok(item_guard) = NOW_PLAYING_MENU_ITEM.try_lock() {
             if let Some(ref item) = *item_guard {

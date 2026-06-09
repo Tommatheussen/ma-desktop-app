@@ -59,6 +59,9 @@ pub struct Settings {
     // Whether to show the menubar/system tray icon
     #[serde(default = "default_show_tray_icon")]
     pub show_tray_icon: bool,
+    // Whether to show now-playing text next to the menubar/system tray icon
+    #[serde(default)]
+    pub show_tray_now_playing: bool,
 }
 
 fn default_close_to_tray() -> bool {
@@ -110,6 +113,7 @@ impl Default for Settings {
             software_volume: default_software_volume(),
             muted: false,
             show_tray_icon: true,
+            show_tray_now_playing: false,
         }
     }
 }
@@ -131,6 +135,7 @@ static SETTINGS: RwLock<Settings> = RwLock::new(Settings {
     software_volume: 100,
     muted: false,
     show_tray_icon: true,
+    show_tray_now_playing: false,
 });
 
 fn get_settings_path() -> Option<PathBuf> {
@@ -187,6 +192,7 @@ pub fn get_settings() -> Settings {
 
 pub fn set_setting(app: tauri::AppHandle, key: &str, value: bool) -> Result<(), String> {
     let mut settings = get_settings();
+    let mut should_refresh_tray_now_playing = false;
 
     match key {
         "discord_rpc_enabled" => {
@@ -224,10 +230,20 @@ pub fn set_setting(app: tauri::AppHandle, key: &str, value: bool) -> Result<(), 
             settings.show_tray_icon = value;
             crate::set_tray_visible(value);
         }
+        "show_tray_now_playing" => {
+            settings.show_tray_now_playing = value;
+            should_refresh_tray_now_playing = true;
+        }
         _ => return Err(format!("Unknown boolean setting: {}", key)),
     }
 
-    save_settings(&settings)
+    save_settings(&settings)?;
+
+    if should_refresh_tray_now_playing {
+        crate::refresh_tray_now_playing();
+    }
+
+    Ok(())
 }
 
 /// Set a string setting value

@@ -93,16 +93,15 @@ pub fn update_now_playing(now_playing: NowPlaying) {
 }
 
 /// Format now-playing info for display (e.g., tray tooltip)
-#[allow(dead_code)]
 pub fn format_now_playing(np: &NowPlaying) -> String {
     if !np.is_playing {
-        return "Music Assistant - Not Playing".to_string();
+        return "Not Playing".to_string();
     }
 
     match (&np.artist, &np.track) {
-        (Some(artist), Some(track)) => format!("{} - {}", artist, track),
+        (Some(artist), Some(track)) => format!("{artist} - {track}"),
         (None, Some(track)) => track.clone(),
-        _ => "Music Assistant - Playing".to_string(),
+        _ => "Playing".to_string(),
     }
 }
 
